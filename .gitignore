@@ -27,4 +27,4 @@ dist/
 *.egg-info/
 
 # Development
-.dev/
+dev/
