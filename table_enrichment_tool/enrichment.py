@@ -115,8 +115,7 @@ def process_row(row, fields_dict, external_data, model_name):
             # Parse the API response into a pandas Series
             field_values = pd.Series({field: json_response.get(field, '') for field in fields_dict.keys()})
             
-            logging.info(f"Processed {row[0]}:")
-            logging.info(textwrap.fill(response.text, width=80))
+            logging.info(f"Processed {row.at[0]}:")
             return field_values
 
         except Exception as e:
