@@ -25,3 +25,6 @@ env/
 build/
 dist/
 *.egg-info/
+
+# Development
+.dev/
