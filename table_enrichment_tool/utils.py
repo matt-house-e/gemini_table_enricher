@@ -1,15 +1,19 @@
 import re
 import json
 import textwrap
-from IPython.display import display
 from IPython.display import Markdown
-
 
 def ensure_columns_exist(df, fields_dict):
     for field in fields_dict.keys():
         if field not in df.columns:
             df[field] = None
     return df
+
+
+def print_wrapped(text: str, width: int = 80) -> None:
+    """Print long text wrapped to the specified width."""
+    wrapped_text = textwrap.fill(text, width=width)
+    print(wrapped_text)
 
 
 def convert_list_to_string(value_list):
