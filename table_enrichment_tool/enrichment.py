@@ -11,7 +11,7 @@ from .gemini_api import build_prompt, call_gemini
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, url_field_name=False, batch_size=10, max_workers=4):
+def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, steps=[], batch_size=10, max_workers=4):
     """
     Updates a CSV file with new contact information obtained via an API in batches,
     saving after each batch to ensure progress is not lost on failure.
@@ -24,6 +24,7 @@ def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, 
         model_name (str): The model name used for generating new content based on prompts.
         batch_size (int): The number of rows in each processing batch.
         max_workers (int): The maximum number of threads to use for parallel processing.
+        steps (list): List of steps, where each step is a dict containing 'function' and 'params'.
     """
     # Load CSV data
     df = pd.read_csv(csv_path)
@@ -40,7 +41,7 @@ def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, 
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
-                executor.submit(process_row, row, fields_dict, external_data, model_name, url_field_name): idx
+                executor.submit(apply_enrichment_steps, row, fields_dict, external_data, model_name, steps): idx
                 for idx, row in batch.iterrows()
             }
             for future in as_completed(futures):
@@ -67,7 +68,7 @@ def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, 
                 try:
                     batch.at[idx, field] = value
                 except Exception as e:
-                    print(f"Failed to update index {idx}, field '{field}' with value '{value}': {e}")
+                    logging.error(f"Failed to update index {idx}, field '{field}' with value '{value}': {e}")
 
         # Save the processed batch back to CSV incrementally
         if start == 0:
@@ -80,7 +81,44 @@ def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, 
     logging.info("All data has been processed and saved.")
 
 
-def process_row(row, fields_dict, external_data, model_name, url_field_name=False):
+def apply_enrichment_steps(row, fields_dict, external_data, model_name, steps):
+    """
+    Apply enrichment steps to a row.
+
+    Parameters:
+        row (pd.Series): DataFrame row containing contact information.
+        fields_dict (dict): Dictionary of fields and their descriptions.
+        external_data (dict): Additional external data required for generating the prompt.
+        model_name (str): Model identifier for the API call.
+        steps (list): List of steps, where each step is a dict containing 'function' and 'params'.
+
+    Returns:
+        pd.Series: A pandas Series with processed API response fields.
+    """
+    for step in steps:
+        function = step['function']
+        params = {}
+        for param_name, field_expression in step['params'].items():
+            # Evaluate the field expression if it starts with 'row'
+            if field_expression.startswith('row'):
+                try:
+                    # Evaluate the field expression to get the value from the row
+                    params[param_name] = eval(field_expression)
+                except Exception as e:
+                    logging.error(f"Error evaluating field expression '{field_expression}' for row {row.name}: {e}")
+                    params[param_name] = None  # Default to None if there's an error
+            else:
+                # If it's not a row field expression, use it as a static value
+                params[param_name] = field_expression
+        
+        # Call the function with the extracted parameters and external_data
+        function(external_data=external_data, **params)
+
+    # Process the row using the updated external data
+    return process_row(row, fields_dict, external_data, model_name)
+
+
+def process_row(row, fields_dict, external_data, model_name):
     """
     Process a contact by generating a prompt and calling an API model.
 
@@ -102,13 +140,6 @@ def process_row(row, fields_dict, external_data, model_name, url_field_name=Fals
         try:
             row_data = row.drop(list(fields_dict.keys()))
 
-            # Process URL
-            if url_field_name:
-                # Generate text content for URL
-                content = get_text_content(row[url_field_name])
-                # Append content to external_data
-                external_data['URL Content'] = content 
-            
             # Build prompt
             prompt = build_prompt(fields_dict, row_data, external_data)
 

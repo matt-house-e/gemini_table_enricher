@@ -1,5 +1,7 @@
 annotated-types==0.7.0
 asttokens==2.4.1
+beautifulsoup4==4.12.3
+bs4==0.0.2
 cachetools==5.3.3
 certifi==2024.2.2
 charset-normalizer==3.3.2
@@ -60,12 +62,14 @@ requests==2.32.2
 rsa==4.9
 shapely==2.0.4
 six==1.16.0
+soupsieve==2.5
 stack-data==0.6.3
 tornado==6.4
 tqdm==4.66.4
 traitlets==5.14.3
 typing_extensions==4.12.0
 tzdata==2024.1
+ultimate-sitemap-parser==0.5
 uritemplate==4.1.1
 urllib3==2.2.1
 wcwidth==0.2.13

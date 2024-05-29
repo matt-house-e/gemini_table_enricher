@@ -6,6 +6,7 @@ from typing import Union
 from usp.tree import sitemap_tree_for_homepage
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.CRITICAL
 
 def tag_visible(element):
     """
