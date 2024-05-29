@@ -107,7 +107,7 @@ def get_pages_from_sitemap(domain_url):
     return raw_page_list
 
 
-def get_unique_page_list(raw_page_list):
+def get_unique_page_list(domain_url):
     """
     Filter a list of page URLs to only include unique URLs.
 
@@ -117,5 +117,6 @@ def get_unique_page_list(raw_page_list):
     Returns:
         list: A list of unique page URLs.
     """
+    raw_page_list = get_pages_from_sitemap(domain_url)
     unique_pages = list(dict.fromkeys(raw_page_list))
     return unique_pages

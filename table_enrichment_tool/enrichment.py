@@ -5,12 +5,13 @@ import google.generativeai as genai
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .utils import extract_json, ensure_columns_exist, convert_list_to_string
+from .scraper import get_text_content
 from .gemini_api import build_prompt, call_gemini
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, batch_size=10, max_workers=4):
+def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, url_field_name=False, batch_size=10, max_workers=4):
     """
     Updates a CSV file with new contact information obtained via an API in batches,
     saving after each batch to ensure progress is not lost on failure.
@@ -39,7 +40,7 @@ def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, 
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
-                executor.submit(process_row, row, fields_dict, external_data, model_name): idx
+                executor.submit(process_row, row, fields_dict, external_data, model_name, url_field_name): idx
                 for idx, row in batch.iterrows()
             }
             for future in as_completed(futures):
@@ -79,7 +80,7 @@ def enrich_table(csv_path, output_path, fields_dict, external_data, model_name, 
     logging.info("All data has been processed and saved.")
 
 
-def process_row(row, fields_dict, external_data, model_name):
+def process_row(row, fields_dict, external_data, model_name, url_field_name=False):
     """
     Process a contact by generating a prompt and calling an API model.
 
@@ -100,6 +101,13 @@ def process_row(row, fields_dict, external_data, model_name):
     if fields_empty:
         try:
             row_data = row.drop(list(fields_dict.keys()))
+
+            # Process URL
+            if url_field_name:
+                # Generate text content for URL
+                content = get_text_content(row[url_field_name])
+                # Append content to external_data
+                external_data['URL Content'] = content 
             
             # Build prompt
             prompt = build_prompt(fields_dict, row_data, external_data)
@@ -115,7 +123,7 @@ def process_row(row, fields_dict, external_data, model_name):
             # Parse the API response into a pandas Series
             field_values = pd.Series({field: json_response.get(field, '') for field in fields_dict.keys()})
             
-            logging.info(f"Processed {row.iat[0]}:")
+            logging.info(f"Processed: {row.iat[0]}")
             return field_values
 
         except Exception as e:
