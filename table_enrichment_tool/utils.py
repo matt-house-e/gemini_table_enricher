@@ -1,7 +1,13 @@
 import re
 import json
 import textwrap
+import logging
+import pandas as pd
+import fitz  # PyMuPDF
 from IPython.display import Markdown
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.CRITICAL
 
 def ensure_columns_exist(df, fields_dict):
     for field in fields_dict.keys():
@@ -78,3 +84,71 @@ def extract_json(text_response):
         return json_objects
     else:
         return None  # Or handle this case as you prefer
+
+def extract_text_from_pdf(file_path):
+    """
+    Extracts all text from a PDF file.
+
+    Parameters:
+        file_path (str): The file path to the PDF file.
+
+    Returns:
+        str: The extracted text from the PDF.
+    """
+    try:
+        # Open the PDF file
+        document = fitz.open(file_path)
+        # Initialize text variable
+        text = ""
+        # Iterate through each page
+        for page_num in range(len(document)):
+            # Get the page
+            page = document.load_page(page_num)
+            # Extract text from the page
+            text += page.get_text()
+        return text
+    except Exception as e:
+        logging.error(f"Error reading PDF file at {file_path}: {e}")
+        return ""
+
+
+def chunk_text(text, num_chunks):
+    """
+    Splits text into specified number of chunks.
+
+    Parameters:
+        text (str): The text to split.
+        num_chunks (int): The number of chunks to split the text into.
+
+    Returns:
+        list: A list of text chunks.
+    """
+    # Split the text into words
+    words = text.split()
+    # Calculate the approximate number of words per chunk
+    chunk_size = len(words) // num_chunks
+    # Create the list of chunks
+    chunks = [' '.join(words[i * chunk_size: (i + 1) * chunk_size]) for i in range(num_chunks)]
+    
+    # Handle any remaining words by appending them to the last chunk
+    if len(words) % num_chunks != 0:
+        chunks[-1] += ' ' + ' '.join(words[num_chunks * chunk_size:])
+    
+    return chunks
+
+
+def save_chunks_to_csv(chunks, output_path):
+    """
+    Saves text chunks to a CSV file, each chunk as a separate row.
+
+    Parameters:
+        chunks (list): The list of text chunks.
+        output_path (str): The file path to save the CSV file.
+    
+    Returns:
+        None
+    """
+    # Create a DataFrame from the chunks
+    df = pd.DataFrame({'Text Chunk': chunks})
+    # Save the DataFrame to a CSV file
+    df.to_csv(output_path, index=False)

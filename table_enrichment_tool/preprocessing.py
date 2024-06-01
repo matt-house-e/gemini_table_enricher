@@ -28,7 +28,7 @@ def generate_unique_id(row, seed, fields, prefix="", length=16):
 
 def anonymize_rows(file_path, output_path, seed, personal_info_fields, id_fields, prefix=""):
     """
-    Anonymize the contact information in a CSV file by generating unique IDs and removing personal info fields.
+    Anonymize the row information in a CSV file by generating unique IDs and removing personal info fields.
 
     Args:
         file_path (str): Path to the input CSV file containing contact information.
