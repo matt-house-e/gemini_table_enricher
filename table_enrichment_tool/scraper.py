@@ -1,3 +1,4 @@
+import re
 import requests
 import logging
 from bs4 import BeautifulSoup, element
@@ -121,3 +122,54 @@ def get_unique_page_list(domain_url):
     raw_page_list = get_pages_from_sitemap(domain_url)
     unique_pages = list(dict.fromkeys(raw_page_list))
     return unique_pages
+
+
+def is_visible(element):
+    """
+    Check if an HTML element is visible on the page.
+
+    Parameters:
+    element (bs4.element.Tag): The BeautifulSoup tag to check for visibility.
+
+    Returns:
+    bool: True if the element is visible, False otherwise.
+    """
+    if element.has_attr('style'):
+        style = element['style']
+        if 'display:none' in style or 'visibility:hidden' in style:
+            return False
+    return True
+
+
+def print_heading_structure(url):
+    """
+    Fetch the HTML content from a URL, parse it, and print the heading structure.
+
+    The function will print each heading (h1 to h6) found in the HTML document,
+    along with an indication if a heading is not visible.
+
+    Parameters:
+    url (str): The URL of the web page to fetch and parse.
+
+    Example:
+    print_heading_structure('https://example.com')
+    """
+    # Fetch the HTML content of the URL
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Find all heading tags
+    headings = soup.find_all(re.compile('^h[1-6]$'))
+    
+    # Create a structure to hold heading levels
+    heading_structure = []
+    for heading in headings:
+        level = int(heading.name[1])
+        text = heading.get_text(strip=True)
+        visible = "Not Visible" if not is_visible(heading) else ""
+        heading_structure.append((level, text, visible))
+    
+    # Print the heading structure with indentation
+    for level, text, visible in heading_structure:
+        indent = '---' * (level - 1)
+        print(f"{indent}h{level}: {text} {visible}")

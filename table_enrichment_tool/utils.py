@@ -10,6 +10,16 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logging.CRITICAL
 
 def ensure_columns_exist(df, fields_dict):
+    """
+    Ensure that all specified columns exist in the DataFrame.
+    
+    Parameters:
+    df (pandas.DataFrame): The DataFrame to modify.
+    fields_dict (dict): A dictionary where keys are the column names to ensure exist in the DataFrame.
+
+    Returns:
+    pandas.DataFrame: The modified DataFrame with the specified columns added if they didn't already exist.
+    """
     for field in fields_dict.keys():
         if field not in df.columns:
             df[field] = None
@@ -17,18 +27,42 @@ def ensure_columns_exist(df, fields_dict):
 
 
 def print_wrapped(text: str, width: int = 80) -> None:
-    """Print long text wrapped to the specified width."""
+    """
+    Print long text wrapped to the specified width.
+    
+    Parameters:
+    text (str): The text to be wrapped and printed.
+    width (int, optional): The maximum line width. Defaults to 80.
+    """
     wrapped_text = textwrap.fill(text, width=width)
     print(wrapped_text)
 
 
 def convert_list_to_string(value_list):
+    """
+    Convert a list of values to a comma-separated string.
+    
+    Parameters:
+    value_list (list): The list of values to convert.
+    
+    Returns:
+    str: A comma-separated string of the list values.
+    """
     return ', '.join(map(str, value_list))
 
 
 def to_markdown(text):
-  text = text.replace('•', '  *')
-  return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
+    """
+    Convert text with bullet points to markdown format suitable for IPython display.
+    
+    Parameters:
+    text (str): The text to convert to markdown.
+    
+    Returns:
+    IPython.display.Markdown: The converted markdown text.
+    """
+    text = text.replace('•', '  *')
+    return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
 
 
 def create_json_blueprint(fields):
@@ -46,7 +80,16 @@ def create_json_blueprint(fields):
 
 
 def extend_search(text, span):
-    # Extend the search to try to capture nested structures
+    """
+    Extend the search to capture nested JSON structures.
+
+    Parameters:
+    text (str): The text to search within.
+    span (tuple): A tuple containing the start and end indices of the initial match.
+
+    Returns:
+    str: The extended JSON string from the start index to the closing brace of the nested structure.
+    """
     start, end = span
     nest_count = 0
     for i in range(start, len(text)):
@@ -60,11 +103,22 @@ def extend_search(text, span):
 
 
 def extract_json(text_response):
-    # This pattern matches a string that starts with '{' and ends with '}'
-    pattern = r'\{[^{}]*\}'
+    """
+    Extract JSON objects from a text response.
 
+    The function searches for strings that start with '{' and end with '}', 
+    attempts to parse them as JSON, and extends the search for nested structures if needed.
+
+    Parameters:
+    text_response (str): The text containing potential JSON strings.
+
+    Returns:
+    list: A list of extracted JSON objects. Returns None if no valid JSON objects are found.
+    """
+    pattern = r'\{[^{}]*\}'
     matches = re.finditer(pattern, text_response)
     json_objects = []
+    
     for match in matches:
         json_str = match.group(0)
         try:
@@ -80,10 +134,12 @@ def extract_json(text_response):
             except json.JSONDecodeError:
                 # Handle cases where the extraction is not valid JSON
                 continue
+
     if json_objects:
         return json_objects
     else:
-        return None  # Or handle this case as you prefer
+        return None
+
 
 def extract_text_from_pdf(file_path):
     """
