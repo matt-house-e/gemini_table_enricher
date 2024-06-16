@@ -104,7 +104,7 @@ Generates a unique ID for a given row based on specified fields and a seed.
 *   `length` (int): Desired length of the generated ID (default is 16).
 
 ---------------
-### `anonymize_rows`
+#### `anonymize_rows`
 
 Anonymizes the row information in a CSV file by generating unique IDs and removing personal info fields.
 
@@ -117,7 +117,7 @@ Anonymizes the row information in a CSV file by generating unique IDs and removi
 *   `prefix` (str): Prefix for the generated ID.
 
 ---------------
-### `de_anonymize_rows`
+#### `de_anonymize_rows`
 
 Merges the original and anonymized CSV files based on the ID field and includes specified personal fields.
 
