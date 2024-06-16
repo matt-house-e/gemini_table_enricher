@@ -2,7 +2,7 @@
 
 ## Overview
 
-Gemini Table Enricher is a Python tool designed to enhance CSV files by enriching them with additional contact information via the Gemini API. It processes the data in batches, ensuring that updates are saved incrementally to prevent data loss. 
+Gemini Table Enricher is a Python tool designed to enhance CSV files by enriching them with additional fields generated via the Gemini API.
 
 ## Features
 
