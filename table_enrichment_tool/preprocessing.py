@@ -54,3 +54,31 @@ def anonymize_rows(file_path, output_path, seed, personal_info_fields, id_fields
     
     # Save the modified DataFrame to a new CSV file
     df_anonymized.to_csv(output_path, index=False)
+
+
+def de_anonymize_rows(original_path, anonymized_path, output_path, personal_info_fields, id_field='ID'):
+    """
+    Merge the original and anonymized CSV files based on the ID field and include specified personal fields.
+
+    Args:
+        original_file_path (str): Path to the original CSV file containing personal information.
+        anonymized_file_path (str): Path to the anonymized CSV file.
+        output_path (str): Path to the output CSV file to save the merged information.
+        personal_info_fields (list): List of personal information fields to include in the merged file.
+        id_field (str): The ID field to use for merging the files (default is 'ID').
+
+    Returns:
+        None
+    """
+    # Read the original and anonymized CSV files
+    original_df = pd.read_csv(original_path)
+    anonymized_df = pd.read_csv(anonymized_path)
+    
+    # Select the specified personal information fields and the ID field from the original DataFrame
+    original_selected_df = original_df[[id_field] + personal_info_fields]
+    
+    # Merge the selected fields from the original DataFrame with the anonymized DataFrame
+    merged_df = pd.merge(anonymized_df, original_selected_df, on=id_field, how='left')
+    
+    # Save the merged DataFrame to the specified output path
+    merged_df.to_csv(output_path, index=False)
